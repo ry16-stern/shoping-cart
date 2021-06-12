@@ -35,8 +35,3 @@ This function takes in the string from the print_receipt function and sends it t
  For Handling Pricing per Pound task the original csv file was added with additional product and all of the items received an additional attribute named "price_per" with item and pound values. Since the csv file was excluded from git commits, these attributes would need to be recreated for the proper operation of the app. 
  
  
-**Table of Contents**
-
-[TOCM]
-
-[TOC]

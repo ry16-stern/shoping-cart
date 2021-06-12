@@ -105,14 +105,16 @@ def print_receipt():
 loop=1
 cart=[]
 # get the list of id's for further exist check
-ids=products_df["id"]
+ids=products_df["id"].tolist()
 while loop==1:
     user_input=input("Please input a product identifier or enter DONE to finish:")
+
     #check if user is entering a proper ID
     if user_input=="":
         print("No products were entered, exiting the checkout")
         break
-    if int(user_input) in ids:
+    
+    if (int(user_input) in ids) or (user_input=="DONE"):
 
         if user_input!="DONE":
             #main code
