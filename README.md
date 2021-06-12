@@ -25,10 +25,10 @@ Here the function takes in the string and saves it to the txt file in a specifie
 
 ### email
 
-This function takes in the string from the print_receipt function and sends it to an email via SendGridAPIClient. All of the API keys and parameters are pulled from .env file
+This function takes in the string from the print_receipt function and sends it to an email via SendGridAPIClient. All of the API keys and parameters are pulled from .env file. Unfortunately the string formated receipt is not rendering properly in the email clien. I was considering converting the string to HTML by adding appropriate tags but I thought since it was not required the task will be considered accoplished without it. 
 
 ### print_receipt
- This function takes in the list of products and compiles a receipt string which is first printed and then sent to email function.
+ This function takes in the list of products and compiles a receipt string which is first printed and then sent to email function. I tried to beautify the rendering by counting the character to minimize misallignment and got a pretty good result. 
  
  ## Things to note
  
