@@ -54,7 +54,7 @@ def email(email_body,sn):
     save_to_file(email_body)
 
 
-def print_receipt_and_send_email():
+def print_receipt():
     #function prints the receipt and sends the receipt string to email function
     STORE_NAME = os.getenv("STORE_NAME")
     STORE_WEBSITE= os.getenv("STORE_WEBSITE")
@@ -153,7 +153,7 @@ while loop==1:
             #exit message
             loop=0
             if len(cart)>0:
-                print_receipt_and_send_email()
+                print_receipt()
     else: #id does not exist in the product inventory
         print("Product does not exist")
 
