@@ -9,7 +9,7 @@ TAX_RATE = os.getenv("TAX_RATE")
 
 csv_filepath = "data/products.csv"
 products_df = read_csv(csv_filepath)
-
+now = datetime.now()
 
 
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", default="OOPS, please set env var called 'SENDGRID_API_KEY'")
@@ -18,16 +18,53 @@ SENDER_ADDRESS = os.getenv("SENDER_ADDRESS", default="OOPS, please set env var c
 def to_usd(my_price):
     return f"${my_price:,.2f}"
 
+def save_to_file(string):
+    date=now.strftime("%Y-%m-%d-%H-%M-%p")
+    text_file = open("receipts/"+str(date)+".txt", "x")
+    n = text_file.write(string)
+    text_file.close()
+
+def email(email_body,sn):
+    client = SendGridAPIClient(SENDGRID_API_KEY) #> <class 'sendgrid.sendgrid.SendGridAPIClient>
+    print("CLIENT:", type(client))
+
+    subject = "Your Receipt from the " + str(sn) + " store." 
+
+    html_content = email_body
+    print("HTML:", html_content)
+
+    # FYI: we'll need to use our verified SENDER_ADDRESS as the `from_email` param
+    # ... but we can customize the `to_emails` param to send to other addresses
+    message = Mail(from_email=SENDER_ADDRESS, to_emails=SENDER_ADDRESS, subject=subject, html_content=html_content)
+
+    try:
+        response = client.send(message)
+
+        print("RESPONSE:", type(response)) #> <class 'python_http_client.client.Response'>
+        print(response.status_code) #> 202 indicates SUCCESS
+        print(response.body)
+        print(response.headers)
+
+    except Exception as err:
+        print(type(err))
+        print(err)
+
+    save_to_file(email_body)
+
+
 def print_receipt_and_send_email():
     STORE_NAME = os.getenv("STORE_NAME")
     STORE_WEBSITE= os.getenv("STORE_WEBSITE")
-    now = datetime.now()
-
-    sp="\n---------------------------------\n"
+    
+    #print the header
+    sp="\n----------------------------\n"
     nl="\n"
     header=sp+STORE_NAME+nl+STORE_WEBSITE+sp+"CHECKOUT AT: "+now.strftime("%d-%m-%Y %H:%M %p")+sp
-    print(header)
 
+    
+    #print the list of items
+    subtot=0
+    body=""
     for item in cart:
       price=item["price"]
       quant=item["quant"]
@@ -38,10 +75,20 @@ def print_receipt_and_send_email():
       else:
           tot=item["price"]
       line=" ... "+item["name"]+space1+"quantity: "+str(quant)+" X "+ to_usd(float(products_df.loc[products_df["id"]==int(item["id"])].to_dict(orient = 'records')[0]["price"]))+"  ("+to_usd(float(tot))+")"
-      print(line)
+     
+      body=body+line+nl
+      subtot=subtot+tot
+    #print taxes and totals
+    tax=subtot*float(TAX_RATE)
 
+    footer=sp+"SUBTOTAL: "+str(to_usd(float(subtot)))+nl+"TAX:      "+to_usd(float(tax))+nl+"TOTAL:    "+to_usd(float(subtot+tax))+sp+"THANKS, SEE YOU AGAIN SOON!"+sp
+    print(header)
+    print(body)
+    print(footer)
 
-    
+    email_body=header+nl+body+nl+footer
+    #send email
+    email(email_body,STORE_NAME)   
 
 '''Main loop of the app allows user to enter an id of the item and adds an item to cart object. 
    The loop checks if the item already in the cart and if so increments quant for items.
@@ -95,27 +142,3 @@ while loop==1:
         print_receipt_and_send_email()
 
 
-def email():
-    client = SendGridAPIClient(SENDGRID_API_KEY) #> <class 'sendgrid.sendgrid.SendGridAPIClient>
-    print("CLIENT:", type(client))
-
-    subject = "Your Receipt from the Green Grocery Store"
-
-    html_content = "Hello World"
-    print("HTML:", html_content)
-
-    # FYI: we'll need to use our verified SENDER_ADDRESS as the `from_email` param
-    # ... but we can customize the `to_emails` param to send to other addresses
-    message = Mail(from_email=SENDER_ADDRESS, to_emails=SENDER_ADDRESS, subject=subject, html_content=html_content)
-
-    try:
-        response = client.send(message)
-
-        print("RESPONSE:", type(response)) #> <class 'python_http_client.client.Response'>
-        print(response.status_code) #> 202 indicates SUCCESS
-        print(response.body)
-        print(response.headers)
-
-    except Exception as err:
-        print(type(err))
-        print(err)
