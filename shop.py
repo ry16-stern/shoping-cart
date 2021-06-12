@@ -19,12 +19,14 @@ def to_usd(my_price):
     return f"${my_price:,.2f}"
 
 def save_to_file(string):
+    #function accepts the string and saves it in a text file
     date=now.strftime("%Y-%m-%d-%H-%M-%p")
     text_file = open("receipts/"+str(date)+".txt", "x")
     n = text_file.write(string)
     text_file.close()
 
 def email(email_body,sn):
+    #function accepts string and emails via sendgrid API
     client = SendGridAPIClient(SENDGRID_API_KEY) #> <class 'sendgrid.sendgrid.SendGridAPIClient>
     print("CLIENT:", type(client))
 
@@ -53,6 +55,7 @@ def email(email_body,sn):
 
 
 def print_receipt_and_send_email():
+    #function prints the receipt and sends the receipt string to email function
     STORE_NAME = os.getenv("STORE_NAME")
     STORE_WEBSITE= os.getenv("STORE_WEBSITE")
     
@@ -90,6 +93,9 @@ def print_receipt_and_send_email():
     #send email
     email(email_body,STORE_NAME)   
 
+
+
+#--------------- MAIN LOOP -----------
 '''Main loop of the app allows user to enter an id of the item and adds an item to cart object. 
    The loop checks if the item already in the cart and if so increments quant for items.
    For items that are charged per pound it will ask the user to indicate the number of pounds and 
@@ -98,47 +104,57 @@ def print_receipt_and_send_email():
 '''
 loop=1
 cart=[]
-
+# get the list of id's for further exist check
+ids=products_df["id"]
 while loop==1:
-    user_input=input("Please input a product identifier:")
-    if user_input!="DONE":
-        #main code
-        pick=products_df.loc[products_df["id"]==int(user_input)].to_dict(orient = 'records')[0]
-        pick["quant"]=1
-        loop=1
-        if pick["price_per"]=="item": #if an item added is counted per item
-            if(len(cart)>0):
-                match=0
-                for item in cart:
-                    if item["id"]==pick["id"]:
-                        item["quant"] += 1
-                        match += 1
-                        break
-                if match<1:
-                    cart.append(pick)  
-            else:
-                cart.append(pick)
-        else: #if an item added is counted per pound, checks if item is new or existing and calculates increments
-            pounds=input("How many pounds?")
-            price=pick["price"]*float(pounds)
-            if(len(cart)>0):
-                match=0
-                for item in cart:
-                    if item["id"]==pick["id"]:
-                        item["quant"] += float(pounds)
-                        item["price"] += float(price)
-                        match += 1
-                        break
-                if match<1:
-                    pick["quant"] = float(pounds)
-                    pick["price"] = float(price)
-                    cart.append(pick)  
-            else:
-                cart.append(pick)
+    user_input=input("Please input a product identifier or enter DONE to finish:")
+    #check if user is entering a proper ID
+    if user_input=="":
+        print("No products were entered, exiting the checkout")
+        break
+    if int(user_input) in ids:
 
-    else:
-        #exit message
-        loop=0
-        print_receipt_and_send_email()
+        if user_input!="DONE":
+            #main code
+            pick=products_df.loc[products_df["id"]==int(user_input)].to_dict(orient = 'records')[0]
+            pick["quant"]=1
+            loop=1
+            if pick["price_per"]=="item": #if an item added is counted per item
+                if(len(cart)>0):
+                    match=0
+                    for item in cart:
+                        if item["id"]==pick["id"]:
+                            item["quant"] += 1
+                            match += 1
+                            break
+                    if match<1:
+                        cart.append(pick)  
+                else:
+                    cart.append(pick)
+            else: #if an item added is counted per pound, checks if item is new or existing and calculates increments
+                pounds=input("How many pounds?")
+                price=pick["price"]*float(pounds)
+                if(len(cart)>0):
+                    match=0
+                    for item in cart:
+                        if item["id"]==pick["id"]:
+                            item["quant"] += float(pounds)
+                            item["price"] += float(price)
+                            match += 1
+                            break
+                    if match<1:
+                        pick["quant"] = float(pounds)
+                        pick["price"] = float(price)
+                        cart.append(pick)  
+                else:
+                    cart.append(pick)
+
+        else:
+            #exit message
+            loop=0
+            if len(cart)>0:
+                print_receipt_and_send_email()
+    else: #id does not exist in the product inventory
+        print("Product does not exist")
 
 
